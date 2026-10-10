@@ -1,0 +1,312 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10151d">
+<title>Controle de Produção</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #10151d;
+  --card: #1a222e;
+  --line: #2b3747;
+  --text: #f2f5f9;
+  --muted: #91a0b3;
+  --green: #35d39a;
+  --blue: #5ca8ff;
+  --orange: #ffb454;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+header {
+  padding: 24px 18px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.brand { color: var(--green); font-size: 12px; font-weight: 800; letter-spacing: 2px; }
+h1 { margin: 7px 0 4px; font-size: 25px; }
+p { color: var(--muted); margin: 5px 0; font-size: 13px; }
+main { max-width: 700px; margin: auto; padding: 16px; padding-bottom: 35px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 17px;
+  margin-bottom: 14px;
+}
+.label { color: var(--muted); font-size: 12px; font-weight: 600; }
+.big { font-size: 43px; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
+.green { color: var(--green); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+h2 { font-size: 16px; margin: 0 0 15px; }
+input, select {
+  width: 100%; padding: 12px; margin-top: 7px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: #111923; color: var(--text); font-size: 15px;
+}
+.field { margin-bottom: 13px; }
+button {
+  border: 0; border-radius: 11px; padding: 13px 15px;
+  font-weight: 750; font-size: 14px; cursor: pointer;
+}
+.primary { background: var(--green); color: #09251c; }
+.secondary { background: #29374a; color: var(--text); }
+.danger { background: #492a30; color: #ff9da7; }
+button:disabled { opacity: .45; }
+.full { width: 100%; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.progress { background: #303b49; height: 8px; border-radius: 9px; overflow: hidden; margin: 12px 0; }
+.bar { height: 100%; width: 0; background: var(--green); transition: width .2s; }
+.small { font-size: 12px; color: var(--muted); }
+.metric { font-size: 23px; font-weight: 750; margin-top: 8px; }
+.history { max-height: 250px; overflow: auto; }
+.entry { display:flex; justify-content:space-between; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); font-size:13px; }
+nav { display:flex; gap:8px; margin-bottom:14px; }
+nav button { flex:1; padding:11px 4px; }
+.active { background: var(--green); color:#09251c; }
+.section { display:none; }
+.section.show { display:block; }
+footer { text-align:center; padding:12px; color:var(--muted); font-size:11px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">INDÚSTRIA · PRODUÇÃO</div>
+  <h1>Controle de Produção</h1>
+  <p id="today"></p>
+</header>
+
+<main>
+  <nav>
+    <button class="active" data-tab="painel">Painel</button>
+    <button class="secondary" data-tab="registro">Produção</button>
+    <button class="secondary" data-tab="historico">Histórico</button>
+  </nav>
+
+  <section id="painel" class="section show">
+    <div class="card">
+      <div class="row">
+        <span class="label">PRODUÇÃO DE HOJE</span>
+        <span class="green">● AO VIVO</span>
+      </div>
+      <div class="big"><span id="total">0</span> <span class="label">paletes</span></div>
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <div class="row">
+        <span class="small">Meta diária: <b id="metaLabel">130</b></span>
+        <b id="percent">0%</b>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">BLOQUINHO</div>
+        <div class="metric" id="bloquinho">0</div>
+        <p>paletes hoje</p>
+      </div>
+      <div class="card">
+        <div class="label">BLOCÃO</div>
+        <div class="metric" id="bloca o">0</div>
+        <p>paletes hoje</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Metas por turno</h2>
+      <div class="row"><span>Manhã</span><b id="manhaText">0 / 50</b></div>
+      <div class="progress"><div class="bar" id="manhaBar"></div></div>
+      <div class="row"><span>Tarde</span><b id="tardeText">0 / 50</b></div>
+      <div class="progress"><div class="bar" id="tardeBar"></div></div>
+    </div>
+
+    <div class="card">
+      <h2>Configurar metas</h2>
+      <div class="grid">
+        <label class="field"><span class="label">Meta diária</span><input id="meta" type="number" min="1" value="130"></label>
+        <label class="field"><span class="label">Meta manhã</span><input id="metaManha" type="number" min="1" value="50"></label>
+        <label class="field"><span class="label">Meta tarde</span><input id="metaTarde" type="number" min="1" value="50"></label>
+      </div>
+      <button class="secondary full" id="saveMetas">Salvar metas</button>
+    </div>
+  </section>
+
+  <section id="registro" class="section">
+    <div class="card">
+      <h2>Nova produção</h2>
+      <label class="field">
+        <span class="label">Produto</span>
+        <select id="produto">
+          <option value="Bloquinho">Bloquinho 9×19×19</option>
+          <option value="Blocão">Blocão 9×19×29</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="label">Turno</span>
+        <select id="turno">
+          <option value="Manhã">Manhã</option>
+          <option value="Tarde">Tarde</option>
+        </select>
+      </label>
+      <div class="row" style="margin-bottom:14px">
+        <div><div class="label">STATUS</div><b id="status">Não iniciada</b></div>
+        <div><div class="label">INÍCIO</div><b id="inicio">--:--</b></div>
+      </div>
+      <button id="iniciar" class="primary full">▶ Iniciar produção</button>
+      <div style="height:10px"></div>
+      <button id="add" class="primary full" disabled>＋ Registrar 1 palete</button>
+      <div style="height:10px"></div>
+      <button id="encerrar" class="danger full" disabled>■ Encerrar produção</button>
+    </div>
+    <div class="card">
+      <h2>Resumo do turno atual</h2>
+      <div class="metric"><span id="turnoTotal">0</span> paletes</div>
+      <p>Os registros são salvos neste dispositivo.</p>
+    </div>
+  </section>
+
+  <section id="historico" class="section">
+    <div class="card">
+      <h2>Registros de hoje</h2>
+      <div class="history" id="lista"></div>
+    </div>
+    <div class="card">
+      <h2>Backup dos dados</h2>
+      <p>Exporte seus registros para guardar uma cópia.</p>
+      <button class="primary full" id="exportar">↓ Exportar backup JSON</button>
+      <div style="height:10px"></div>
+      <label class="secondary full" style="display:block;text-align:center;padding:13px;border-radius:11px;font-size:14px;font-weight:750">
+        ↑ Importar backup JSON
+        <input id="importar" type="file" accept=".json,application/json" style="display:none">
+      </label>
+    </div>
+  </section>
+</main>
+<footer>CONTROLE DE PRODUÇÃO · VERSÃO 1.0</footer>
+
+<script>
+const KEY = "controleProducaoLucasV1";
+const hoje = () => new Date().toLocaleDateString("en-CA");
+const hora = () => new Date().toLocaleTimeString("pt-BR");
+const agora = () => new Date().toISOString();
+
+let dados;
+try {
+  dados = JSON.parse(localStorage.getItem(KEY)) || {};
+} catch {
+  dados = {};
+}
+dados.registros ||= [];
+dados.sessoes ||= [];
+dados.config ||= {meta:130, metaManha:50, metaTarde:50};
+dados.ativa ||= null;
+
+function salvar() {
+  localStorage.setItem(KEY, JSON.stringify(dados));
+}
+function registrosHoje() {
+  return dados.registros.filter(r => r.data === hoje());
+}
+function sessoesHoje() {
+  return dados.sessoes.filter(s => s.data === hoje());
+}
+function render() {
+  const rs = registrosHoje();
+  const total = rs.length;
+  const blo = rs.filter(r=>r.produto==="Bloquinho").length;
+  const bloco = rs.filter(r=>r.produto==="Blocão").length;
+  const meta = Number(dados.config.meta)||130;
+  const mm = Number(dados.config.metaManha)||50;
+  const mt = Number(dados.config.metaTarde)||50;
+  document.getElementById("today").textContent =
+    new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+  document.getElementById("total").textContent = total;
+  document.getElementById("bloquinho").textContent = blo;
+  document.getElementById("bloca o").textContent = bloco;
+  document.getElementById("metaLabel").textContent = meta;
+  document.getElementById("percent").textContent = Math.round(total/meta*100)+"%";
+  document.getElementById("bar").style.width = Math.min(100,total/meta*100)+"%";
+  const manha = rs.filter(r=>r.turno==="Manhã").length;
+  const tarde = rs.filter(r=>r.turno==="Tarde").length;
+  document.getElementById("manhaText").textContent = `${manha} / ${mm}`;
+  document.getElementById("tardeText").textContent = `${tarde} / ${mt}`;
+  document.getElementById("manhaBar").style.width = Math.min(100,manha/mm*100)+"%";
+  document.getElementById("tardeBar").style.width = Math.min(100,tarde/mt*100)+"%";
+  ["meta","metaManha","metaTarde"].forEach(id=>document.getElementById(id).value=dados.config[id]);
+  const ativa = dados.ativa;
+  document.getElementById("status").textContent = ativa ? "Em produção" : "Não iniciada";
+  document.getElementById("inicio").textContent = ativa ? ativa.horaInicio : "--:--";
+  document.getElementById("iniciar").disabled = !!ativa;
+  document.getElementById("add").disabled = !ativa;
+  document.getElementById("encerrar").disabled = !ativa;
+  document.getElementById("turnoTotal").textContent = ativa ? ativa.paletes : 0;
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+  rs.slice().reverse().forEach(r=>{
+    const el = document.createElement("div");
+    el.className="entry";
+    const left=document.createElement("span");
+    left.textContent=`${r.produto} · ${r.turno}`;
+    const right=document.createElement("b");
+    right.textContent=r.hora;
+    el.append(left,right);
+    lista.appendChild(el);
+  });
+  if(!rs.length) lista.textContent="Nenhum palete registrado hoje.";
+}
+document.querySelectorAll("[data-tab]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll("[data-tab]").forEach(b=>{b.classList.remove("active");b.classList.add("secondary")});
+    btn.classList.add("active");btn.classList.remove("secondary");
+    document.querySelectorAll(".section").forEach(s=>s.classList.remove("show"));
+    document.getElementById(btn.dataset.tab).classList.add("show");
+  });
+});
+document.getElementById("saveMetas").onclick=()=>{
+  ["meta","metaManha","metaTarde"].forEach(id=>{
+    dados.config[id]=Math.max(1,Number(document.getElementById(id).value)||1);
+  });
+  salvar();render();alert("Metas salvas!");
+};
+document.getElementById("iniciar").onclick=()=>{
+  dados.ativa={data:hoje(),horaInicio:hora(),inicioISO:agora(),produto:document.getElementById("produto").value,turno:document.getElementById("turno").value,paletes:0};
+  dados.sessoes.push({...dados.ativa});
+  salvar();render();
+};
+document.getElementById("add").onclick=()=>{
+  if(!dados.ativa)return;
+  const r={data:hoje(),hora:hora(),momento:agora(),produto:dados.ativa.produto,turno:dados.ativa.turno};
+  dados.registros.push(r);dados.ativa.paletes++;
+  salvar();render();
+};
+document.getElementById("encerrar").onclick=()=>{
+  if(!dados.ativa)return;
+  const sessao=dados.sessoes.findLast(s=>s.inicioISO===dados.ativa.inicioISO);
+  if(sessao){sessao.fim=hora();sessao.fimISO=agora();sessao.paletes=dados.ativa.paletes;}
+  dados.ativa=null;salvar();render();
+};
+document.getElementById("exportar").onclick=()=>{
+  const blob=new Blob([JSON.stringify(dados,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="backup-producao-"+hoje()+".json";a.click();
+  URL.revokeObjectURL(url);
+};
+document.getElementById("importar").onchange=async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const novo=JSON.parse(await file.text());
+    if(!Array.isArray(novo.registros)||!Array.isArray(novo.sessoes))throw Error();
+    if(!confirm("Importar este backup substituirá os dados atuais. Continuar?"))return;
+    dados=novo;salvar();render();alert("Backup importado!");
+  }catch{alert("Arquivo inválido ou incompatível.");}
+  e.target.value="";
+};
+render();
+</script>
+</body>
+</html>
